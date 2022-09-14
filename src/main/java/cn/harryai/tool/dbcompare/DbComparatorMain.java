@@ -1,8 +1,10 @@
 package cn.harryai.tool.dbcompare;
 
+import cn.harryai.tool.dbcompare.config.ComparisonHandlerConfig;
 import cn.harryai.tool.dbcompare.config.DbCompareConfig;
 import cn.harryai.tool.dbcompare.config.DbConfig;
 import cn.harryai.tool.dbcompare.config.SchemaConfig;
+import cn.harryai.tool.dbcompare.config.TableConfig;
 import cn.harryai.tool.dbcompare.enums.DialectEnum;
 
 /**
@@ -16,13 +18,13 @@ import cn.harryai.tool.dbcompare.enums.DialectEnum;
 public class DbComparatorMain {
     public static void main(String[] args) {
         DbCompareConfig build = DbCompareConfig.builder()
-                .leftDb(DbConfig.builder()
+                .rightDb(DbConfig.builder()
                         .host("")
                         .dialect(DialectEnum.MYSQL8)
                         .password("")
                         .userName("")
                         .build())
-                .rightDb(DbConfig.builder()
+                .leftDb(DbConfig.builder()
                         .host("")
                         .dialect(DialectEnum.MYSQL8)
                         .password("")
@@ -30,6 +32,8 @@ public class DbComparatorMain {
                         .build())
                 .schemas(new SchemaConfig[]{SchemaConfig.builder().schemaName("scp_purchase").excludeTableName(
                         "undo_log").build()})
+                .tables(new TableConfig[]{TableConfig.builder().schemaName("scp_product").build()})
+                .comparisonHandlerConfig(ComparisonHandlerConfig.builder().fullMode(false).build())
                 .build();
         DbComparator.builder().dbCompareConfig(build).build().compare();
     }

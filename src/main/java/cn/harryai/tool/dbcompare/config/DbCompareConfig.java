@@ -1,7 +1,11 @@
 package cn.harryai.tool.dbcompare.config;
 
+import cn.harryai.tool.dbcompare.enums.PrintFormat;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+
+import java.util.Arrays;
 
 /**
  * <p>
@@ -18,5 +22,13 @@ public class DbCompareConfig {
     private DbConfig rightDb;
     private SchemaConfig[] schemas;
     private TableConfig[] tables;
-    private boolean writeExcel;
+
+    private PrinterConfig printerConfig;
+
+    /**
+     * 只显示差异还是所有。
+     * true,显示所有。
+     * false,显示差异。
+     */
+    private ComparisonHandlerConfig comparisonHandlerConfig;
 }

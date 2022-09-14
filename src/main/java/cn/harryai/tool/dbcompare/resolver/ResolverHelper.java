@@ -1,12 +1,13 @@
 package cn.harryai.tool.dbcompare.resolver;
 
 import cn.harryai.tool.dbcompare.annotion.TableField;
-import cn.harryai.tool.dbcompare.module.Column;
 import org.apache.commons.lang3.reflect.FieldUtils;
 
 import java.lang.reflect.Field;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiFunction;
@@ -81,9 +82,21 @@ public final class ResolverHelper {
             }
             return 0f;
         });
-        map.put(Object.class,(res,key)-> {
+        map.put(Object.class, (res, key) -> {
             try {
                 return res.getObject(key);
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+            return null;
+        });
+        map.put(LocalDateTime.class, (res, key) -> {
+            try {
+                Timestamp timestamp = res.getTimestamp(key);
+                if (timestamp != null) {
+                    return timestamp.toLocalDateTime();
+                }
+                return null;
             } catch (SQLException e) {
                 e.printStackTrace();
             }

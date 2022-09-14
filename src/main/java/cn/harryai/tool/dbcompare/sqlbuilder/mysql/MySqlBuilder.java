@@ -3,8 +3,10 @@ package cn.harryai.tool.dbcompare.sqlbuilder.mysql;
 import cn.harryai.tool.dbcompare.config.SchemaConfig;
 import cn.harryai.tool.dbcompare.config.TableConfig;
 import cn.harryai.tool.dbcompare.sqlbuilder.AbsSqlBuilder;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.Arrays;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -16,34 +18,27 @@ import java.util.stream.Collectors;
  * @since 2022/09/13 18:49
  **/
 public class MySqlBuilder extends AbsSqlBuilder {
+    String schemeCondition = " AND TABLE_SCHEMA in(%s)";
+    String tableCondition = " AND TABLE_NAME in (%s)";
+    String excludeTableCondition = " AND TABLE_NAME not in (%s)";
 
     @Override
     protected String buildColumn(SchemaConfig[] config) {
-        String sql = "select * from COLUMNS where TABLE_SCHEMA in(%s) and TABLE_NAME not in (%s)";
-        String schemas =
-                Arrays.stream(config).map(SchemaConfig::getSchemaName).distinct().map(e -> "'" + e + "'").collect(Collectors.joining(","));
-        String excludeTables =
-                Arrays.stream(config).map(SchemaConfig::getExcludeTableName).distinct().map(e -> "'" + e + "'").collect(Collectors.joining(","));
-        return String.format(sql, schemas, excludeTables);
+        String sql = "select * from COLUMNS where 1 = 1 %s %s";
+        return String.format(sql, getSchemaCondition(config), getExcludeTableCondition(config));
     }
+
 
     @Override
     protected String buildColumn(TableConfig[] config) {
-        String schemas =
-                Arrays.stream(config).map(TableConfig::getSchemaName).distinct().map(e -> "'" + e + "'").collect(Collectors.joining(
-                        ","));
-        String tables =
-                Arrays.stream(config).map(TableConfig::getTableName).distinct().map(e -> "'" + e + "'").collect(Collectors.joining(","));
-        String sql = "select * from COLUMNS where TABLE_SCHEMA in(%s) and TABLE_NAME in(%s)";
-        return String.format(sql, schemas, tables);
+        String sql = "select * from COLUMNS where 1 = 1 %s %s";
+        return String.format(sql, getSchemaCondition(config), getTableCondition(config));
     }
+
 
     @Override
     protected String buildTable(SchemaConfig[] config) {
-        String sql = "select  tb.*,idx.`index` from (select * from tables where TABLE_SCHEMA in (%s) and " +
-                "TABLE_NAME" +
-                " not in" +
-                "(%s)) tb\n" +
+        String sql = "select  tb.*,idx.`index` from (select * from tables  where 1 = 1 %s %s) tb\n" +
                 "    left join\n" +
                 "(select ba.TABLE_SCHEMA,ba.TABLE_NAME,group_concat(ba.`index`  SEPARATOR ';\\n') as `index` from" +
                 "(select a.table_schema,\n" +
@@ -55,11 +50,7 @@ public class MySqlBuilder extends AbsSqlBuilder {
                 "group by a.table_schema, a.table_name,a.index_name,a.index_type) ba\n" +
                 "group by ba.TABLE_SCHEMA, ba.TABLE_NAME) idx\n" +
                 "on idx.table_schema=tb.table_schema and idx.table_name=tb.table_name;";
-        String schemas =
-                Arrays.stream(config).map(SchemaConfig::getSchemaName).distinct().map(e -> "'" + e + "'").collect(Collectors.joining(","));
-        String excludeTables =
-                Arrays.stream(config).map(SchemaConfig::getExcludeTableName).distinct().map(e -> "'" + e + "'").collect(Collectors.joining(","));
-        return String.format(sql, schemas, excludeTables);
+        return String.format(sql, getSchemaCondition(config), getExcludeTableCondition(config));
     }
 
 
@@ -82,14 +73,7 @@ public class MySqlBuilder extends AbsSqlBuilder {
      */
     @Override
     protected String buildTable(TableConfig[] config) {
-        String schemas =
-                Arrays.stream(config).map(TableConfig::getSchemaName).distinct().map(e -> "'" + e + "'").collect(Collectors.joining(
-                        ","));
-        String tables =
-                Arrays.stream(config).map(TableConfig::getTableName).distinct().map(e -> "'" + e + "'").collect(Collectors.joining(","));
-        String sql = "select  tb.*,idx.`index` from (select * from tables where TABLE_SCHEMA in (%s) and TABLE_NAME " +
-                "in" +
-                "(%s)) tb\n" +
+        String sql = "select  tb.*,idx.`index` from (select * from tables where 1 = 1 %s %s ) tb\n" +
                 "    left join\n" +
                 "(select ba.TABLE_SCHEMA,ba.TABLE_NAME,group_concat(ba.`index`  SEPARATOR ';\\n') as `index` from" +
                 "(select a.table_schema,\n" +
@@ -101,6 +85,54 @@ public class MySqlBuilder extends AbsSqlBuilder {
                 "group by a.table_schema, a.table_name,a.index_name,a.index_type) ba\n" +
                 "group by ba.TABLE_SCHEMA, ba.TABLE_NAME) idx\n" +
                 "on idx.table_schema=tb.table_schema and idx.table_name=tb.table_name;";
-        return String.format(sql, schemas, tables);
+
+        return String.format(sql, getSchemaCondition(config), getTableCondition(config));
+    }
+
+    private String getExcludeTableCondition(SchemaConfig[] config) {
+        String excludeTables =
+                join(config, SchemaConfig::getExcludeTableName);
+
+        if (StringUtils.isNotEmpty(excludeTables)) {
+            return String.format(excludeTableCondition, excludeTables);
+        }
+        return StringUtils.EMPTY;
+    }
+
+
+    private String getSchemaCondition(SchemaConfig[] config) {
+        String schemas =
+                join(config, SchemaConfig::getSchemaName);
+        if (StringUtils.isNotEmpty(schemas)) {
+            return String.format(schemeCondition, schemas);
+        }
+        return StringUtils.EMPTY;
+    }
+
+    private String getSchemaCondition(TableConfig[] config) {
+        String schemas =
+                join(config, TableConfig::getSchemaName);
+        if (StringUtils.isNotEmpty(schemas)) {
+            return String.format(schemeCondition, schemas);
+        }
+        return StringUtils.EMPTY;
+    }
+
+    private String getTableCondition(TableConfig[] config) {
+        String tables = join(config, TableConfig::getTableName);
+        if (StringUtils.isNotEmpty(tables)) {
+            return String.format(tableCondition, tables);
+        }
+        return StringUtils.EMPTY;
+    }
+
+    private String join(TableConfig[] config, Function<TableConfig, String> getter) {
+        return Arrays.stream(config).filter(e -> getter.apply(e) != null
+        ).map(getter).distinct().map(e -> "'" + e + "'").collect(Collectors.joining(","));
+    }
+
+    private String join(SchemaConfig[] config, Function<SchemaConfig, String> getter) {
+        return Arrays.stream(config).filter(e -> getter.apply(e) != null
+        ).map(getter).distinct().map(e -> "'" + e + "'").collect(Collectors.joining(","));
     }
 }

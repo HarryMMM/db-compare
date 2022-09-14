@@ -3,7 +3,7 @@ package cn.harryai.tool.dbcompare.db;
 import cn.harryai.tool.dbcompare.config.DbConfig;
 import cn.harryai.tool.dbcompare.config.ResolverConfig;
 import cn.harryai.tool.dbcompare.enums.DialectEnum;
-import cn.harryai.tool.dbcompare.module.Table;
+import cn.harryai.tool.dbcompare.module.Comparable;
 import cn.harryai.tool.dbcompare.resolver.ResultResolver;
 import cn.harryai.tool.dbcompare.resolver.ResultResolverManger;
 import cn.harryai.tool.dbcompare.sqlbuilder.SqlBuilder;
@@ -17,7 +17,9 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -49,11 +51,25 @@ public class DatabaseManager {
         }
     }
 
-    public Pair<List<Table>, List<Table>> search() {
-        return Pair.of(doSearch(left), doSearch(right));
+    public Map<Class<? extends Comparable>, Pair<List<? extends Comparable>, List<? extends Comparable>>> search() {
+        Map<Class<? extends Comparable>, List<? extends Comparable>> classMapLeft = doSearch(left);
+        Map<Class<? extends Comparable>, List<? extends Comparable>> classMapRight = doSearch(right);
+        Map<Class<? extends Comparable>, Pair<List<? extends Comparable>, List<? extends Comparable>>> compMap =
+                new HashMap<>();
+        for (Map.Entry<Class<? extends Comparable>, ? extends List<? extends Comparable>> lEntity :
+                classMapLeft.entrySet()) {
+            List<? extends Comparable> l = lEntity.getValue();
+            Class<? extends Comparable> key = lEntity.getKey();
+            compMap.put(key, Pair.of(l, classMapRight.remove(key)));
+        }
+        for (Map.Entry<Class<? extends Comparable>, List<? extends Comparable>> rEntity :
+                classMapRight.entrySet()) {
+            compMap.put(rEntity.getKey(), Pair.of(null, rEntity.getValue()));
+        }
+        return compMap;
     }
 
-    private List<Table> doSearch(DbConfig dbConfig) {
+    private Map<Class<? extends Comparable>, List<? extends Comparable>> doSearch(DbConfig dbConfig) {
         Connection connect = connect(dbConfig);
         SqlBuilder absSqlBuilder = SqlBuilderManger.getSqlBuilder(dbConfig.getDialect());
         try {

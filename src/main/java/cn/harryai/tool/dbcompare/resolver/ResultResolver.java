@@ -1,11 +1,13 @@
 package cn.harryai.tool.dbcompare.resolver;
 
+import cn.harryai.tool.dbcompare.module.Comparable;
 import cn.harryai.tool.dbcompare.module.Table;
 
 import java.lang.reflect.InvocationTargetException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -16,5 +18,6 @@ import java.util.List;
  * @since 2022/09/13 19:56
  **/
 public interface ResultResolver {
-    public List<Table> resolving(ResultSet tableResultSet, ResultSet columnResultSet) throws SQLException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, InstantiationException;
+    public Map<Class<? extends Comparable>, List<? extends Comparable>> resolving(ResultSet tableResultSet, ResultSet columnResultSet) throws SQLException,
+            IllegalAccessException, InvocationTargetException, NoSuchMethodException, InstantiationException;
 }

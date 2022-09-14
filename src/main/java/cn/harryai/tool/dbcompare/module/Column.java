@@ -22,7 +22,7 @@ import java.io.Serializable;
 @Setter
 @Accessors(chain = true)
 @TableName("COLUMNS")
-public class Column implements Serializable {
+public class Column implements Comparable {
     private static final long serialVersionUID = 1L;
 
     @TableField("TABLE_CATALOG")

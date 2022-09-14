@@ -26,7 +26,7 @@ import java.util.List;
 @Data
 @TableName("TABLES")
 @NoArgsConstructor
-public class Table implements Serializable {
+public class Table implements Comparable {
 
     private static final long serialVersionUID = 1L;
 

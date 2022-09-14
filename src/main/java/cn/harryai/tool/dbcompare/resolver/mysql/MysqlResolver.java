@@ -1,6 +1,7 @@
 package cn.harryai.tool.dbcompare.resolver.mysql;
 
 import cn.harryai.tool.dbcompare.module.Column;
+import cn.harryai.tool.dbcompare.module.Comparable;
 import cn.harryai.tool.dbcompare.module.Table;
 import cn.harryai.tool.dbcompare.resolver.ResolverHelper;
 import cn.harryai.tool.dbcompare.resolver.ResultResolver;
@@ -14,6 +15,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -28,15 +30,17 @@ import java.util.stream.Collectors;
  **/
 public class MysqlResolver implements ResultResolver {
     @Override
-    public List<Table> resolving(ResultSet tableResultSet, ResultSet columnResultSet) throws SQLException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, InstantiationException {
+    public Map<Class<? extends Comparable>,  List<? extends Comparable>> resolving(ResultSet tableResultSet,
+                                                                                            ResultSet columnResultSet) throws SQLException,
+            IllegalAccessException, InvocationTargetException, NoSuchMethodException, InstantiationException {
         // 获取表数据
-        List<Table> tables = getData(tableResultSet,Table.class);
+        List<Table> tables = getData(tableResultSet, Table.class);
         if (CollectionUtils.isEmpty(tables)) {
-            return Collections.emptyList();
+            return Collections.emptyMap();
         }
 
         // 获取列数据
-        List<Column> columns = getData(columnResultSet,Column.class);
+        List<Column> columns = getData(columnResultSet, Column.class);
         if (CollectionUtils.isNotEmpty(columns)) {
             Map<String, List<Column>> columnGroupByTableSchemaAndTableNameMap =
                     columns.stream().collect(Collectors.groupingBy(e -> getKey(e.getTableSchema(), e.getTableName())));
@@ -46,7 +50,10 @@ public class MysqlResolver implements ResultResolver {
                 table.setColumns(columnGroupByTableSchemaAndTableNameMap.get(key));
             }
         }
-        return tables;
+        Map<Class<? extends Comparable>, List<? extends Comparable>> map = new HashMap<>();
+        map.put(Table.class, tables);
+        map.put(Column.class, columns);
+        return map;
     }
 
     private String getKey(String tableSchema, String tableName) {

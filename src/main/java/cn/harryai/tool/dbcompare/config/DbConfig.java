@@ -3,7 +3,6 @@ package cn.harryai.tool.dbcompare.config;
 import cn.harryai.tool.dbcompare.enums.DialectEnum;
 import lombok.Builder;
 import lombok.Data;
-import lombok.Getter;
 
 /**
  *
@@ -20,4 +19,12 @@ public class DbConfig {
     private String userName;
     private String password;
     private DialectEnum dialect;
+    private String alias;
+
+    public String getAlias() {
+        if (alias == null) {
+            alias = host;
+        }
+        return alias;
+    }
 }
