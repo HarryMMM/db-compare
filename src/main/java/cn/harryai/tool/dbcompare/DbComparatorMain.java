@@ -30,9 +30,13 @@ public class DbComparatorMain {
                         .password("")
                         .userName("")
                         .build())
-                .schemas(new SchemaConfig[]{SchemaConfig.builder().schemaName("scp_purchase").excludeTableName(
-                        "undo_log").build()})
-                .tables(new TableConfig[]{TableConfig.builder().schemaName("scp_product").build()})
+                .schema(
+                        SchemaConfig.builder().schemaNames(new String[]{"scp_brand", "scp_cost", "scp_demand",
+                                "scp_file", "scp_inventory", "scp_manufacture", "scp_message", "scp_product",
+                                "scp_purchase", "scp_quality", "scp_resource", "scp_settlement", "scp_sys"
+                                , "scp_integration"}).excludeTableNames(
+                                new String[]{"undo_log"}).build())
+//                .table(TableConfig.builder().schemaNames(new String[]{"scp_product"}).build())
                 .comparisonHandlerConfig(ComparisonHandlerConfig.builder().fullMode(false).build())
                 .build();
         DbComparator.builder().dbCompareConfig(build).build().compare();

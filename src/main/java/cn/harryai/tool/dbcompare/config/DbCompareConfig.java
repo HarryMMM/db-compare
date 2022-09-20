@@ -20,8 +20,8 @@ import java.util.Arrays;
 public class DbCompareConfig {
     private DbConfig leftDb;
     private DbConfig rightDb;
-    private SchemaConfig[] schemas;
-    private TableConfig[] tables;
+    private SchemaConfig schema;
+    private TableConfig table;
 
     private PrinterConfig printerConfig;
 

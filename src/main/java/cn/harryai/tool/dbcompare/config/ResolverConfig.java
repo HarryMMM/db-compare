@@ -14,6 +14,6 @@ import lombok.Data;
 @AllArgsConstructor
 @Data
 public class ResolverConfig {
-    private SchemaConfig[] schemas;
-    private TableConfig[] tables;
+    private SchemaConfig schema;
+    private TableConfig table;
 }
