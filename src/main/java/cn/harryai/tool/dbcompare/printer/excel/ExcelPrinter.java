@@ -20,6 +20,8 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -39,15 +41,18 @@ public final class ExcelPrinter extends AbsPinter<PrinterConfig> {
     @Override
     protected String doPrint(DataWarp<?, ?> dataWarp) {
         String templateFileName = getClass().getClassLoader().getResource("compResult.xlsx").getFile();
-
-        Path fileName = Paths.get(basePath,  System.currentTimeMillis()+".xlsx" );
+        String leftDbAlias = dataWarp.getLeftDbAlias();
+        String rightDbAlias = dataWarp.getRightDbAlias();
+        Path fileName = Paths.get(basePath,
+                "["+leftDbAlias + "]VS[" + rightDbAlias + "]_" + DateTimeFormatter.ofPattern(
+                "yyyyMMddHHmmSS").format(LocalDateTime.now()) + ".xlsx");
         try (ExcelWriter excelWriter = EasyExcel.write(fileName.toString()).withTemplate(templateFileName).build()) {
             WriteSheet tableSheet = EasyExcel.writerSheet("table").build();
             WriteSheet columnSheet = EasyExcel.writerSheet("column").build();
 
             Map<String, Object> map = MapUtils.newHashMap();
-            map.put("leftDbAlias", dataWarp.getLeftDbAlias());
-            map.put("rightDbAlias", dataWarp.getRightDbAlias());
+            map.put("leftDbAlias", leftDbAlias);
+            map.put("rightDbAlias", rightDbAlias);
             excelWriter.fill(map, tableSheet);
             excelWriter.fill(map, columnSheet);
             Map<Class<? extends Comparable>, List<? extends ComparisonResult>> compResult = dataWarp.getCompResult();

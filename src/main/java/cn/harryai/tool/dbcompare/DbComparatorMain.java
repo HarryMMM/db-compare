@@ -23,12 +23,14 @@ public class DbComparatorMain {
                         .dialect(DialectEnum.MYSQL8)
                         .password("")
                         .userName("")
+                        .alias("dev")
                         .build())
                 .leftDb(DbConfig.builder()
                         .host("")
                         .dialect(DialectEnum.MYSQL8)
                         .password("")
                         .userName("")
+                        .alias("test")
                         .build())
                 .schema(
                         SchemaConfig.builder().schemaNames(new String[]{"scp_brand", "scp_cost", "scp_demand",
