@@ -14,6 +14,6 @@ import lombok.Data;
 @Data
 @Builder
 public class TableConfig {
-    private String [] schemaNames;
-    private String [] tableNames;
+    private String schemaName;
+    private String tableName;
 }

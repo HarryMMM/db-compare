@@ -44,7 +44,7 @@ public class DbComparator {
         this.printerConfig = printerConfig == null ? PrinterConfig.builder().printFormat(PrintFormat.EXCEL).build() :
                 printerConfig;
         databaseManager = new DatabaseManager(dbCompareConfig.getLeftDb(), dbCompareConfig.getRightDb(),
-                new ResolverConfig(dbCompareConfig.getSchema(), dbCompareConfig.getTable()));
+                new ResolverConfig(dbCompareConfig.getSchemas(), dbCompareConfig.getTables()));
     }
 
     @SuppressWarnings("unchecked")

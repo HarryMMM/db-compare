@@ -3,8 +3,6 @@ package cn.harryai.tool.dbcompare.config;
 import lombok.Builder;
 import lombok.Data;
 
-import java.util.List;
-
 /**
  * <p>
  *
@@ -16,6 +14,6 @@ import java.util.List;
 @Data
 @Builder
 public class SchemaConfig {
-    private String [] schemaNames;
-    private String [] excludeTableNames;
+    private String schemaName;
+    private String excludeTableName;
 }
