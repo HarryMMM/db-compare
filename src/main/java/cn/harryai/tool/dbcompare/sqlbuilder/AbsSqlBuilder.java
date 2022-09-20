@@ -25,7 +25,7 @@ public abstract class AbsSqlBuilder implements SqlBuilder {
         }else {
             s= buildColumn(config.getSchemas());
         }
-        log.info("The sql is: {}",s);
+        log.debug("The sql is: {}",s);
         return s;
     }
 
@@ -38,7 +38,7 @@ public abstract class AbsSqlBuilder implements SqlBuilder {
         }else {
             s= buildTable(config.getSchemas());
         }
-        log.info("The sql is: {}",s);
+        log.debug("The sql is: {}",s);
         return s;
     }
 

@@ -71,10 +71,6 @@ public class DbComparator {
 
     }
 
-    private List<Column> getColumns(List<Table> tables) {
-        return tables.stream().flatMap(e -> e.getColumns().stream()).collect(Collectors.toList());
-    }
-
     public static DbComparator.DbComparatorBuilder builder() {
         return new DbComparator.DbComparatorBuilder();
     }
