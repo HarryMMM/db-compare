@@ -11,12 +11,33 @@ import cn.harryai.tool.dbcompare.module.Table;
 import cn.harryai.tool.dbcompare.printer.AbsPinter;
 import cn.harryai.tool.dbcompare.printer.DataWarp;
 import cn.harryai.tool.dbcompare.util.BeanUtils;
+import cn.harryai.tool.dbcompare.util.ExcelUtils;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.ExcelWriter;
+import com.alibaba.excel.metadata.Head;
+import com.alibaba.excel.metadata.data.WriteCellData;
+import com.alibaba.excel.support.ExcelTypeEnum;
 import com.alibaba.excel.util.MapUtils;
+import com.alibaba.excel.write.handler.RowWriteHandler;
+import com.alibaba.excel.write.handler.context.CellWriteHandlerContext;
 import com.alibaba.excel.write.metadata.WriteSheet;
+import com.alibaba.excel.write.metadata.holder.WriteSheetHolder;
+import com.alibaba.excel.write.metadata.holder.WriteTableHolder;
+import com.alibaba.excel.write.metadata.style.WriteCellStyle;
+import com.alibaba.excel.write.style.HorizontalCellStyleStrategy;
+import com.alibaba.excel.write.style.column.AbstractColumnWidthStyleStrategy;
+import org.apache.commons.lang3.SerializationUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.poi.ss.usermodel.BorderStyle;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.Font;
+import org.apache.poi.ss.usermodel.IndexedColors;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.streaming.SXSSFSheet;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -35,6 +56,10 @@ import java.util.stream.Collectors;
  * @since 2022/09/16 14:20
  **/
 public final class ExcelPrinter extends AbsPinter<PrinterConfig> {
+
+    private static final String TABLE = "table";
+    private static final String COLUMN = "column";
+
     public ExcelPrinter() {
     }
 
@@ -44,11 +69,15 @@ public final class ExcelPrinter extends AbsPinter<PrinterConfig> {
         String leftDbAlias = dataWarp.getLeftDbAlias();
         String rightDbAlias = dataWarp.getRightDbAlias();
         Path fileName = Paths.get(basePath,
-                "["+leftDbAlias + "]VS[" + rightDbAlias + "]_" + DateTimeFormatter.ofPattern(
-                "yyyyMMddHHmmSS").format(LocalDateTime.now()) + ".xlsx");
-        try (ExcelWriter excelWriter = EasyExcel.write(fileName.toString()).withTemplate(templateFileName).build()) {
-            WriteSheet tableSheet = EasyExcel.writerSheet("table").build();
-            WriteSheet columnSheet = EasyExcel.writerSheet("column").build();
+                "[" + leftDbAlias + "]VS[" + rightDbAlias + "]_" + DateTimeFormatter.ofPattern(
+                        "yyyyMMddHHmmss").format(LocalDateTime.now()) + ".xlsx");
+        try (ExcelWriter excelWriter = EasyExcel.write(fileName.toString()).withTemplate(templateFileName)
+                .registerWriteHandler(rowWriteHandler())
+                .registerWriteHandler(cellBorder())
+                .excelType(ExcelTypeEnum.XLSX)
+                .build()) {
+            WriteSheet tableSheet = EasyExcel.writerSheet(TABLE).build();
+            WriteSheet columnSheet = EasyExcel.writerSheet(COLUMN).build();
 
             Map<String, Object> map = MapUtils.newHashMap();
             map.put("leftDbAlias", leftDbAlias);
@@ -75,9 +104,47 @@ public final class ExcelPrinter extends AbsPinter<PrinterConfig> {
         return fileName.toString();
     }
 
+    private static RowWriteHandler rowWriteHandler() {
+        return new RowWriteHandler() {
+            @Override
+            public void afterRowDispose(WriteSheetHolder writeSheetHolder, WriteTableHolder writeTableHolder, Row row
+                    , Integer relativeRowIndex, Boolean isHead) {
+                if (row.getRowNum() < 2) {
+                    CellStyle rowStyle = row.getRowStyle();
+                    return;
+                }
+                int startRowNun;
+                if (TABLE.equals(writeSheetHolder.getSheetName())) {
+                    startRowNun = 2;
+                } else if (COLUMN.equals(writeSheetHolder.getSheetName())) {
+                    startRowNun = 3;
+                } else {
+                    return;
+                }
+                for (int i = startRowNun; i < row.getLastCellNum(); i++) {
+                    Cell cell1 = row.getCell(i);
+                    Cell cell2 = row.getCell(++i);
+                    if (!ExcelUtils.cellValueEqual(cell1,cell2)) {
+                        Sheet sheet = writeSheetHolder.getSheet();
+                        Workbook workbook = sheet.getWorkbook();
+                        Font font = workbook.createFont();
+                        font.setFontHeightInPoints((short) 12);
+                        font.setColor(IndexedColors.RED.getIndex());
+                        font.setBold(true);
+                        CellStyle cellStyle = workbook.createCellStyle();
+                        cellStyle.cloneStyleFrom(cell1.getCellStyle());
+                        cellStyle.setFont(font);
+                        cell1.setCellStyle(cellStyle);
+                        cell2.setCellStyle(cellStyle);
+                    }
+                }
+            }
+        };
+    }
+
     private List<Object> dillData(List<? extends ComparisonResult> compResult) {
         List<Object> collect = compResult.stream()
-                .map(e -> BeanUtils.beanToMap(e,"-" ))
+                .map(e -> BeanUtils.beanToMap(e, "-"))
                 .collect(Collectors.toList());
         return collect;
     }
@@ -85,5 +152,14 @@ public final class ExcelPrinter extends AbsPinter<PrinterConfig> {
     @Override
     public PrintFormat name() {
         return PrintFormat.EXCEL;
+    }
+
+    public static HorizontalCellStyleStrategy cellBorder() {
+        WriteCellStyle contentWriteCellStyle = new WriteCellStyle();
+        contentWriteCellStyle.setBorderLeft(BorderStyle.THIN);
+        contentWriteCellStyle.setBorderTop(BorderStyle.THIN);
+        contentWriteCellStyle.setBorderRight(BorderStyle.THIN);
+        contentWriteCellStyle.setBorderBottom(BorderStyle.THIN);
+        return new HorizontalCellStyleStrategy(contentWriteCellStyle, contentWriteCellStyle);
     }
 }

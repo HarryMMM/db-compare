@@ -36,7 +36,11 @@ public final class ResolverHelper {
         });
         map.put(String.class,(res,key)-> {
             try {
-                return res.getString(key);
+                String str = res.getString(key);
+                if (str != null) {
+                    str = str.replaceAll("\r|\r\n|\n", System.lineSeparator());
+                }
+                return str;
             } catch (SQLException e) {
                 e.printStackTrace();
             }
