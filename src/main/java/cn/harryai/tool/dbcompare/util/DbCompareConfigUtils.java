@@ -16,6 +16,13 @@ import cn.harryai.tool.dbcompare.enums.DialectEnum;
  * @since 2022/09/21 10:14
  **/
 public final class DbCompareConfigUtils {
+
+    private static final String[] SCHEMA_NAMES = {"scp_brand", "scp_cost", "scp_demand",
+            "scp_file", "scp_inventory", "scp_manufacture", "scp_message", "scp_product",
+            "scp_purchase", "scp_quality", "scp_resource", "scp_settlement", "scp_sys"
+            , "scp_integration"};
+    private static final String[] EXCLUDE_TABLE_NAMES = {"undo_log"};
+
     private DbCompareConfigUtils() {
     }
     public static DbConfig dev(){
@@ -56,11 +63,8 @@ public final class DbCompareConfigUtils {
     }
 
     public static SchemaConfig schemaConfig() {
-        return SchemaConfig.builder().schemaNames(new String[]{"scp_brand", "scp_cost", "scp_demand",
-                "scp_file", "scp_inventory", "scp_manufacture", "scp_message", "scp_product",
-                "scp_purchase", "scp_quality", "scp_resource", "scp_settlement", "scp_sys"
-                , "scp_integration"}).excludeTableNames(
-                new String[]{"undo_log"}).build();
+        return SchemaConfig.builder().schemaNames(SCHEMA_NAMES).excludeTableNames(
+                 EXCLUDE_TABLE_NAMES).build();
     }
 
     public static TableConfig tableConfig() {
