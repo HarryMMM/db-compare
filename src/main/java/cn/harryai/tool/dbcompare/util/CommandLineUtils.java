@@ -48,6 +48,8 @@ public final class CommandLineUtils {
 
     private static final Option FULL_MODE;
 
+    private static final Option VERSION;
+
 
     private CommandLineUtils() {
     }
@@ -73,7 +75,7 @@ public final class CommandLineUtils {
                 .longOpt("custom")
                 .hasArg()
                 .required(false)
-                .desc("自定义比较数据库,与mode参数互斥，优先使用mode.参数格式如下：" + System.lineSeparator() +
+                .desc("自定义比较数据库,与-c参数互斥，同时使用优先使用此参数.参数格式如下：" + System.lineSeparator() +
                         "dialect:ip:port:username:password:alias|dialect:ip:port:username:password:alias"
                         + System.lineSeparator() +
                         "dialect: 必填，数据库方言：目前支持mysql|mysql8" +System.lineSeparator()+
@@ -116,6 +118,12 @@ public final class CommandLineUtils {
                 .hasArg(false)
                 .desc("比对报告输出所有表的比对信息。不加此参数默认只输出有差异的表信息")
                 .build();
+        VERSION = Option.builder()
+                .option("v")
+                .longOpt("version")
+                .hasArg(false)
+                .desc("版本信息")
+                .build();
 
 
     }
@@ -128,9 +136,8 @@ public final class CommandLineUtils {
                 .addOption(TABLE)
                 .addOption(EXCLUDE_TABLE)
                 .addOption(SCHEMA)
+                .addOption(VERSION)
                 .addOption(FULL_MODE);
-
-        ;
         return options;
     }
 
@@ -168,7 +175,10 @@ public final class CommandLineUtils {
             return;
         }
         CommandLine commandLine = parse.get();
-        if (!commandLine.hasOption(MODE) && !commandLine.hasOption(CUSTOM)) {
+
+        if (commandLine.hasOption(VERSION)){
+            System.out.println("db-compare version 0.0.1");
+        }else if (!commandLine.hasOption(MODE) && !commandLine.hasOption(CUSTOM)) {
             help();
         } else if (commandLine.hasOption(MODE)) {
             compareWithMode(commandLine, commandLine.getOptionValue(MODE));
