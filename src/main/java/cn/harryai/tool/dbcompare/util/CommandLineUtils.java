@@ -74,13 +74,13 @@ public final class CommandLineUtils {
                 .hasArg()
                 .required(false)
                 .desc("自定义比较数据库,与mode参数互斥，优先使用mode.参数格式如下：" + System.lineSeparator() +
-                        "dialect:ip:port:username:password:alias|dialect:ip:port :username :password:alias"
+                        "dialect:ip:port:username:password:alias|dialect:ip:port:username:password:alias"
                         + System.lineSeparator() +
-                        "dialect: 必填，数据库方言：目前支持mysql|mysql8" +
-                        "host: 必填，数据库主机地址" +
-                        "port: 可选，默认使用数据库的缺省端口" +
-                        "username: 必填，数据库账户" +
-                        "password: 必填，数据库密码" +
+                        "dialect: 必填，数据库方言：目前支持mysql|mysql8" +System.lineSeparator()+
+                        "host: 必填，数据库主机地址" +System.lineSeparator()+
+                        "port: 可选，默认使用数据库的缺省端口" +System.lineSeparator()+
+                        "username: 必填，数据库账户" +System.lineSeparator()+
+                        "password: 必填，数据库密码" +System.lineSeparator()+
                         "alias: 可选，数据库别名，输出报告使用。没有的话使用IP当做别名"
                         + System.lineSeparator() +
                         "示例 ：-c mysql8:192.168.13.70:3306:user:pwd:test|mysql8"
@@ -100,7 +100,7 @@ public final class CommandLineUtils {
                 .longOpt("table")
                 .hasArg()
                 .required(false)
-                .desc("参与比对的表信息。注意：1. 必须与-s同时设置 2. 与-e互斥,同时设置优先使用此参数，忽略-e。 eg. -t table1,table2")
+                .desc("参与比对的表信息。与-e互斥,同时设置优先使用此参数，忽略-e。 eg. -t table1,table2")
                 .build();
 
         EXCLUDE_TABLE = Option.builder()
@@ -108,7 +108,7 @@ public final class CommandLineUtils {
                 .longOpt("exclude-table")
                 .hasArg()
                 .required(false)
-                .desc("不参与对比的表信息,注意：1. 必须与-s同时设置 2. 与-t互斥，同时设置优先使用-t参数，忽略此参数,默认排除undo_log表。eg. -e table1,table2")
+                .desc("不参与对比的表信息,与-t互斥，同时设置优先使用-t参数，忽略此参数,默认排除undo_log表。eg. -e table1,table2")
                 .build();
         FULL_MODE = Option.builder()
                 .option("f")
@@ -146,7 +146,7 @@ public final class CommandLineUtils {
             message.append(msg)
                     .append(System.lineSeparator());
         }
-        message.append("\tdb-compare 用来比较数据库表的差异的工具");
+        message.append("db-compare 用来比较数据库表的差异的工具");
         formatter.printHelp(message.toString(), options);
     }
 
