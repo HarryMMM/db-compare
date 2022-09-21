@@ -1,6 +1,5 @@
 package cn.harryai.tool.dbcompare.util;
 
-import ch.qos.logback.classic.LoggerContext;
 import cn.harryai.tool.dbcompare.DbComparator;
 import cn.harryai.tool.dbcompare.config.ComparisonHandlerConfig;
 import cn.harryai.tool.dbcompare.config.DbCompareConfig;
@@ -192,8 +191,7 @@ public final class CommandLineUtils {
             help();
             return;
         }
-        String compare = dbComparator.compare();
-        System.out.println("Your report is here: " + compare);
+         dbComparator.compare();
     }
 
     private static String[] argsPreDillArgs(String[] args) {

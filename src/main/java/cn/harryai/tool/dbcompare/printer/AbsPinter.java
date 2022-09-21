@@ -19,9 +19,7 @@ public abstract class AbsPinter<C extends PrinterConfig> implements IPinter<C> {
 
     @Override
     public String print(DataWarp<?, ?> warp) {
-        String filePath = doPrint(warp);
-        log.info("Your report is here: {}", filePath);
-        return filePath;
+        return doPrint(warp);
     }
 
     @Override

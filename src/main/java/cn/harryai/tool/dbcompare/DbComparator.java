@@ -6,13 +6,12 @@ import cn.harryai.tool.dbcompare.config.ResolverConfig;
 import cn.harryai.tool.dbcompare.db.DatabaseManager;
 import cn.harryai.tool.dbcompare.enums.PrintFormat;
 import cn.harryai.tool.dbcompare.handler.comparator.IComparatorHandler;
-import cn.harryai.tool.dbcompare.module.Column;
 import cn.harryai.tool.dbcompare.module.Comparable;
 import cn.harryai.tool.dbcompare.module.ComparisonResult;
-import cn.harryai.tool.dbcompare.module.Table;
 import cn.harryai.tool.dbcompare.printer.DataWarp;
 import cn.harryai.tool.dbcompare.printer.IPinter;
 import cn.harryai.tool.dbcompare.printer.PrinterManager;
+import cn.harryai.tool.dbcompare.util.DbCompareContent;
 import cn.harryai.tool.dbcompare.util.ServiceLoadUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
@@ -20,7 +19,6 @@ import org.apache.commons.lang3.tuple.Pair;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -48,10 +46,23 @@ public class DbComparator {
     }
 
     @SuppressWarnings("unchecked")
-    public String compare() {
+    public void compare() {
         // 查询列
+        if (DbCompareContent.isCli()) {
+            System.out.println("开始查询数据库……");
+        } else {
+            log.info("开始查询数据库……");
+        }
         Map<Class<? extends Comparable>, Pair<List<? extends Comparable>, List<? extends Comparable>>> compMap =
                 databaseManager.search();
+
+        if (DbCompareContent.isCli()) {
+            System.out.println("数据库查询完成……");
+            System.out.println("开始数据比对……");
+        } else {
+            log.info("数据库查询完成……");
+            log.info("开始数据比对……");
+        }
 
         Map<Class<? extends Comparable>, List<? extends ComparisonResult>> compResult = new HashMap<>();
 
@@ -64,12 +75,26 @@ public class DbComparator {
             compResult.putAll(sub);
         }
 
+        if (DbCompareContent.isCli()) {
+            System.out.println("数据比对完成……");
+            System.out.println("开始输出报告……");
+        } else {
+            log.info("数据比对完成……");
+            log.info("开始输出报告……");
+        }
         // 打印
         IPinter<PrinterConfig> printer = PrinterManager.getInstance().getPrinter(printerConfig);
         String reportPath = printer.print(new DataWarp<>(compResult, dbCompareConfig.getLeftDb().getAlias(),
                 dbCompareConfig.getRightDb().getAlias()));
-        return reportPath;
-
+        if (DbCompareContent.isCli()) {
+            System.out.println("报告输出完成……");
+            System.out.println("你的报告在这里：" + reportPath);
+        } else {
+            log.info("报告输出完成……");
+            if (reportPath != null) {
+                log.info("你的报告在这里：" + reportPath);
+            }
+        }
     }
 
     public static DbComparator.DbComparatorBuilder builder() {
