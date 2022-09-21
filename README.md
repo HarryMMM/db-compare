@@ -1,7 +1,7 @@
 # db-compare
 
 ## 用法
-``
+```
 usage: db-compare 用来比较数据库表的差异的工具
  -c,--custom <arg>          自定义比较数据库,与mode参数互斥，优先使用mode.参数格式如下：
                             dialect:ip:port:username:password:alias|dialec
@@ -30,4 +30,4 @@ usage: db-compare 用来比较数据库表的差异的工具
                             ma. eg. -s schema1,schema2
  -t,--table <arg>           参与比对的表信息。与-e互斥,同时设置优先使用此参数，忽略-e。 eg. -t
                             table1,table2
-``
+```
