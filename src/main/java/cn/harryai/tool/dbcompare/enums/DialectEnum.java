@@ -5,7 +5,7 @@ import lombok.Getter;
 
 /**
  * <p>
- *
+ * 方言
  * <p>
  *
  * @author haorui.hao

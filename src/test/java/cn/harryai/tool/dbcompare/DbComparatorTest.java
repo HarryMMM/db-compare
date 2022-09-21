@@ -2,6 +2,7 @@ package cn.harryai.tool.dbcompare;
 
 import cn.harryai.tool.dbcompare.config.ComparisonHandlerConfig;
 import cn.harryai.tool.dbcompare.config.DbCompareConfig;
+import cn.harryai.tool.dbcompare.util.CommandLineUtils;
 import cn.harryai.tool.dbcompare.util.DbCompareConfigUtils;
 
 /**
@@ -20,9 +21,15 @@ class DbComparatorTest {
                 .rightDb(DbCompareConfigUtils.dev())
                 .leftDb(DbCompareConfigUtils.test())
                 .schema(DbCompareConfigUtils.schemaConfig()
-                        )
+                )
                 .comparisonHandlerConfig(ComparisonHandlerConfig.builder().fullMode(false).build())
                 .build();
         DbComparator.builder().dbCompareConfig(build).build().compare();
+    }
+
+    @org.junit.jupiter.api.Test
+    void argTest() {
+        String[] args = {"-m 3"};
+        CommandLineUtils.exec(args);
     }
 }
