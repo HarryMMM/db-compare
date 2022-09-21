@@ -15,8 +15,9 @@ public interface IPinter<C extends PrinterConfig> {
     /**
      * 打印
      * @param warp 数据包装器
+     * @return
      */
-    void print(DataWarp<?,?> warp);
+    String print(DataWarp<?,?> warp);
 
     /**
      * 打印器的名字

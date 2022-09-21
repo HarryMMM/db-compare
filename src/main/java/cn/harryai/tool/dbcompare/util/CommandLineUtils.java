@@ -1,5 +1,6 @@
 package cn.harryai.tool.dbcompare.util;
 
+import ch.qos.logback.classic.LoggerContext;
 import cn.harryai.tool.dbcompare.DbComparator;
 import cn.harryai.tool.dbcompare.config.ComparisonHandlerConfig;
 import cn.harryai.tool.dbcompare.config.DbCompareConfig;
@@ -176,22 +177,30 @@ public final class CommandLineUtils {
         }
         CommandLine commandLine = parse.get();
 
+        DbComparator dbComparator;
         if (commandLine.hasOption(VERSION)){
             System.out.println("db-compare version 0.0.1");
+            return;
         }else if (!commandLine.hasOption(MODE) && !commandLine.hasOption(CUSTOM)) {
             help();
+            return;
         } else if (commandLine.hasOption(MODE)) {
-            compareWithMode(commandLine, commandLine.getOptionValue(MODE));
+            dbComparator = compareWithMode(commandLine, commandLine.getOptionValue(MODE));
         } else if (commandLine.hasOption(CUSTOM)) {
-            customCompare(commandLine);
+            dbComparator = customCompare(commandLine);
+        } else {
+            help();
+            return;
         }
+        String compare = dbComparator.compare();
+        System.out.println("Your report is here: " + compare);
     }
 
     private static String[] argsPreDillArgs(String[] args) {
         return Arrays.stream(args).map(StringUtils::trim).toArray(String[]::new);
     }
 
-    private static void customCompare(CommandLine commandLine) {
+    private static DbComparator customCompare(CommandLine commandLine) {
         String customArgs = commandLine.getOptionValue(CUSTOM);
         Pair<DbConfig, DbConfig> dbConfigDbConfigPair = parseArgs(customArgs);
         DbCompareConfig config = DbCompareConfig.builder()
@@ -203,7 +212,7 @@ public final class CommandLineUtils {
                 .build();
 
         DbCompareConfig dbCompareConfig = setSchemaOrTableFilter(commandLine, config);
-        DbComparator.builder().dbCompareConfig(dbCompareConfig).build().compare();
+        return DbComparator.builder().dbCompareConfig(dbCompareConfig).build();
     }
 
     private static DbCompareConfig setSchemaOrTableFilter(CommandLine commandLine, DbCompareConfig config) {
@@ -281,11 +290,11 @@ public final class CommandLineUtils {
                 .build();
     }
 
-    private static void compareWithMode(CommandLine commandLine, String mode) {
+    private static DbComparator compareWithMode(CommandLine commandLine, String mode) {
         Optional<Mode> instance = Mode.getInstance(mode);
         if (!instance.isPresent()) {
             help();
-            return;
+            System.exit(1);
         }
         Mode modeEnum = instance.get();
         DbCompareConfig dbCompareConfig = null;
@@ -305,10 +314,9 @@ public final class CommandLineUtils {
                 break;
         }
         dbCompareConfig.getComparisonHandlerConfig().setFullMode(commandLine.hasOption(FULL_MODE));
-        DbComparator.builder()
+        return DbComparator.builder()
                 .dbCompareConfig(setSchemaOrTableFilter(commandLine, dbCompareConfig))
-                .build().compare();
-
+                .build();
     }
 
     @Getter

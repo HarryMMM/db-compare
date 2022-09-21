@@ -48,7 +48,7 @@ public class DbComparator {
     }
 
     @SuppressWarnings("unchecked")
-    public void compare() {
+    public String compare() {
         // 查询列
         Map<Class<? extends Comparable>, Pair<List<? extends Comparable>, List<? extends Comparable>>> compMap =
                 databaseManager.search();
@@ -66,8 +66,9 @@ public class DbComparator {
 
         // 打印
         IPinter<PrinterConfig> printer = PrinterManager.getInstance().getPrinter(printerConfig);
-        printer.print(new DataWarp<>(compResult, dbCompareConfig.getLeftDb().getAlias(),
+        String reportPath = printer.print(new DataWarp<>(compResult, dbCompareConfig.getLeftDb().getAlias(),
                 dbCompareConfig.getRightDb().getAlias()));
+        return reportPath;
 
     }
 

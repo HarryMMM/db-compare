@@ -18,9 +18,10 @@ public abstract class AbsPinter<C extends PrinterConfig> implements IPinter<C> {
     protected String basePath = System.getProperty("java.io.tmpdir");
 
     @Override
-    public void print(DataWarp<?, ?> warp) {
+    public String print(DataWarp<?, ?> warp) {
         String filePath = doPrint(warp);
-        log.info("The report is here: {}", filePath);
+        log.info("Your report is here: {}", filePath);
+        return filePath;
     }
 
     @Override

@@ -3,7 +3,7 @@
 ## 用法
 ```
 usage: db-compare 用来比较数据库表的差异的工具
- -c,--custom <arg>          自定义比较数据库,与mode参数互斥，优先使用mode.参数格式如下：
+ -c,--custom <arg>          自定义比较数据库,与-c参数互斥，同时使用优先使用此参数.参数格式如下：
                             dialect:ip:port:username:password:alias|dialec
                             t:ip:port:username:password:alias
                             dialect: 必填，数据库方言：目前支持mysql|mysql8
@@ -21,7 +21,7 @@ usage: db-compare 用来比较数据库表的差异的工具
                             g表。eg. -e table1,table2
  -f,--full-mode             比对报告输出所有表的比对信息。不加此参数默认只输出有差异的表信息
  -h,--help <arg>            帮助信息
- -m,--mode <arg>            指定要使用的模式，custom，优先使用此参数。内置以下几个:
+ -m,--mode <arg>            指定要使用的模式，与-c互斥，同时使用优先使用此参数。内置以下几个:
                             1. dev vs test
                             2. test vs pre
                             3. pre vs prod
@@ -30,4 +30,5 @@ usage: db-compare 用来比较数据库表的差异的工具
                             ma. eg. -s schema1,schema2
  -t,--table <arg>           参与比对的表信息。与-e互斥,同时设置优先使用此参数，忽略-e。 eg. -t
                             table1,table2
+ -v,--version               版本信息
 ```
