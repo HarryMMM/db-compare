@@ -71,7 +71,6 @@ public class ComparisonTableResult implements ComparisonResult<ComparisonTableRe
                 .append(tableTypeL, tableTypeR)
                 .append(engineL, engineR)
                 .append(rowFormatL, rowFormatR)
-                .append(dataLengthL, dataLengthR)
                 .append(indexLengthL, indexLengthR)
                 .append(tableCommentL, tableCommentR)
                 .append(indexL, indexR)
