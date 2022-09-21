@@ -71,5 +71,31 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
-
+<build>
+    <finalName>db-compare</finalName>
+    <plugins>
+        <plugin>
+            <artifactId>maven-assembly-plugin</artifactId>
+            <configuration>
+                <archive>
+                    <manifest>
+                        <mainClass>cn.harryai.tool.dbcompare.DbComparatorMain</mainClass>
+                    </manifest>
+                </archive>
+                <descriptorRefs>
+                    <descriptorRef>jar-with-dependencies</descriptorRef>
+                </descriptorRefs>
+            </configuration>
+            <executions>
+                <execution>
+                    <id>make-assembly</id> <!-- 用于maven继承项目的聚合 -->
+                    <phase>package</phase> <!-- 绑定到package阶段 -->
+                    <goals>
+                        <goal>single</goal>
+                    </goals>
+                </execution>
+            </executions>
+        </plugin>
+    </plugins>
+</build>
 </project>

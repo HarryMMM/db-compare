@@ -68,7 +68,7 @@ public final class DbCompareConfigUtils {
     }
 
     public static TableConfig tableConfig() {
-        return TableConfig.builder().schemaNames(new String[]{"scp_product"}).build();
+        return TableConfig.builder().schemaNames(SCHEMA_NAMES).build();
     }
 
     public static DbCompareConfig devVsTest() {

@@ -1,6 +1,12 @@
 package cn.harryai.tool.dbcompare.util;
 
 import cn.harryai.tool.dbcompare.DbComparator;
+import cn.harryai.tool.dbcompare.config.ComparisonHandlerConfig;
+import cn.harryai.tool.dbcompare.config.DbCompareConfig;
+import cn.harryai.tool.dbcompare.config.DbConfig;
+import cn.harryai.tool.dbcompare.config.SchemaConfig;
+import cn.harryai.tool.dbcompare.config.TableConfig;
+import cn.harryai.tool.dbcompare.enums.DialectEnum;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -12,7 +18,9 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 
+import java.util.Arrays;
 import java.util.Locale;
 import java.util.Optional;
 
@@ -26,45 +34,103 @@ import java.util.Optional;
  **/
 @Slf4j
 public final class CommandLineUtils {
-    private static Option MODE;
-    private static Option COSTOM;
+    private static final Option MODE;
+
+    private static final Option CUSTOM;
+
+    private static final Option HELP;
+
+    private static final Option SCHEMA;
+
+    private static final Option TABLE;
+
+    private static final Option EXCLUDE_TABLE;
+
+    private static final Option FULL_MODE;
+
 
     private CommandLineUtils() {
     }
 
     static {
+        HELP = Option.builder()
+                .option("h")
+                .longOpt("help")
+                .hasArg()
+                .required(false)
+                .desc("帮助信息")
+                .build();
         MODE = Option.builder()
                 .option("m")
                 .longOpt("mode")
                 .hasArg()
                 .required(false)
-                .desc("指定要比较的数据库，custom，优先使用此参数。内置以下几个:" + System.lineSeparator() + "1. dev vs test" + System.lineSeparator() +
+                .desc("指定要使用的模式，custom，优先使用此参数。内置以下几个:" + System.lineSeparator() + "1. dev vs test" + System.lineSeparator() +
                         "2. test vs pre" + System.lineSeparator() + "3. pre vs prod")
                 .build();
-        COSTOM = Option.builder()
+        CUSTOM = Option.builder()
                 .option("c")
                 .longOpt("custom")
                 .hasArg()
                 .required(false)
-                .desc("自定义比较数据库,与mode参数互斥，优先使用mode.参数格式如下：dialect:ip:port:username:password:alias|dialect:ip:port" +
-                        ":username" +
-                        ":password:alias" + System.lineSeparator() +
-                        "ip: 数据库方言：目前支持mysql|mysql8" +
+                .desc("自定义比较数据库,与mode参数互斥，优先使用mode.参数格式如下：" + System.lineSeparator() +
+                        "dialect:ip:port:username:password:alias|dialect:ip:port :username :password:alias"
+                        + System.lineSeparator() +
+                        "dialect: 必填，数据库方言：目前支持mysql|mysql8" +
+                        "host: 必填，数据库主机地址" +
                         "port: 可选，默认使用数据库的缺省端口" +
                         "username: 必填，数据库账户" +
                         "password: 必填，数据库密码" +
-                        "alias: 可选，数据库别名，输出报告使用。没有的话使用IP当做别名" +
-                        System.lineSeparator() +
-                        "示例 ：-c mysql8:192.168.13.70:3306:user:pwd" +
-                        ":test|mysql8" +
-                        ":192.168.13.175:3306:root:pwd:dev")
+                        "alias: 可选，数据库别名，输出报告使用。没有的话使用IP当做别名"
+                        + System.lineSeparator() +
+                        "示例 ：-c mysql8:192.168.13.70:3306:user:pwd:test|mysql8"
+                        + ":192.168.13.175:3306:root:pwd:dev")
                 .build();
+
+        SCHEMA = Option.builder()
+                .option("s")
+                .longOpt("schema")
+                .hasArg()
+                .required(false)
+                .desc("比对的schema，可结合-e或-t使用。指定某些schema.默认比较scp全部的schema. eg. -s schema1,schema2")
+                .build();
+
+        TABLE = Option.builder()
+                .option("t")
+                .longOpt("table")
+                .hasArg()
+                .required(false)
+                .desc("参与比对的表信息。注意：1. 必须与-s同时设置 2. 与-e互斥,同时设置优先使用此参数，忽略-e。 eg. -t table1,table2")
+                .build();
+
+        EXCLUDE_TABLE = Option.builder()
+                .option("e")
+                .longOpt("exclude-table")
+                .hasArg()
+                .required(false)
+                .desc("不参与对比的表信息,注意：1. 必须与-s同时设置 2. 与-t互斥，同时设置优先使用-t参数，忽略此参数,默认排除undo_log表。eg. -e table1,table2")
+                .build();
+        FULL_MODE = Option.builder()
+                .option("f")
+                .longOpt("full-mode")
+                .hasArg(false)
+                .desc("比对报告输出所有表的比对信息。不加此参数默认只输出有差异的表信息")
+                .build();
+
 
     }
 
     private static Options getOptions() {
         Options options = new Options();
-        options.addOption(MODE).addOption(COSTOM);
+        options.addOption(MODE)
+                .addOption(CUSTOM)
+                .addOption(HELP)
+                .addOption(TABLE)
+                .addOption(EXCLUDE_TABLE)
+                .addOption(SCHEMA)
+                .addOption(FULL_MODE);
+
+        ;
         return options;
     }
 
@@ -80,9 +146,7 @@ public final class CommandLineUtils {
             message.append(msg)
                     .append(System.lineSeparator());
         }
-        message.append("db-compare")
-                .append(System.lineSeparator())
-                .append("\tdb-compare是用来比较数据库表的差异的工具");
+        message.append("\tdb-compare 用来比较数据库表的差异的工具");
         formatter.printHelp(message.toString(), options);
     }
 
@@ -98,55 +162,161 @@ public final class CommandLineUtils {
     }
 
     public static void exec(String[] args) {
-        Optional<CommandLine> parse = parse(args);
+        String[] postDillArgs = argsPreDillArgs(args);
+        Optional<CommandLine> parse = parse(postDillArgs);
         if (!parse.isPresent()) {
             return;
         }
         CommandLine commandLine = parse.get();
-        if (!commandLine.hasOption(MODE) && commandLine.hasOption(COSTOM)) {
+        if (!commandLine.hasOption(MODE) && !commandLine.hasOption(CUSTOM)) {
             help();
         } else if (commandLine.hasOption(MODE)) {
-            compareWithMode(commandLine.getOptionValue(MODE));
-        } else {
-            // 解析参数
+            compareWithMode(commandLine, commandLine.getOptionValue(MODE));
+        } else if (commandLine.hasOption(CUSTOM)) {
+            customCompare(commandLine);
         }
     }
 
-    private static void compareWithMode(String mode) {
+    private static String[] argsPreDillArgs(String[] args) {
+        return Arrays.stream(args).map(StringUtils::trim).toArray(String[]::new);
+    }
+
+    private static void customCompare(CommandLine commandLine) {
+        String customArgs = commandLine.getOptionValue(CUSTOM);
+        Pair<DbConfig, DbConfig> dbConfigDbConfigPair = parseArgs(customArgs);
+        DbCompareConfig config = DbCompareConfig.builder()
+                .leftDb(dbConfigDbConfigPair.getLeft())
+                .rightDb(dbConfigDbConfigPair.getRight())
+                .comparisonHandlerConfig(ComparisonHandlerConfig.builder()
+                        .fullMode(commandLine.hasOption(FULL_MODE))
+                        .build())
+                .build();
+
+        DbCompareConfig dbCompareConfig = setSchemaOrTableFilter(commandLine, config);
+        DbComparator.builder().dbCompareConfig(dbCompareConfig).build().compare();
+    }
+
+    private static DbCompareConfig setSchemaOrTableFilter(CommandLine commandLine, DbCompareConfig config) {
+        config.setSchema(getSchemaConfig(commandLine));
+        // 如果设置了table（-t）参数，则设置TableConfig,否则设置SchemaConfig
+        if (commandLine.hasOption(TABLE)) {
+            String optionValue = commandLine.getOptionValue(TABLE);
+            String[] tableNames = optionValue.split(",");
+            TableConfig tableConfig = DbCompareConfigUtils.tableConfig();
+            tableConfig.setTableNames(tableNames);
+            config.setTable(tableConfig);
+
+        } else if (commandLine.hasOption(EXCLUDE_TABLE)) {
+            String optionValue = commandLine.getOptionValue(EXCLUDE_TABLE);
+            String[] excludeTables = optionValue.split(",");
+            config.getSchema().setExcludeTableNames(excludeTables);
+        }
+        return config;
+    }
+
+    private static SchemaConfig getSchemaConfig(CommandLine commandLine) {
+        SchemaConfig schemaConfig = DbCompareConfigUtils.schemaConfig();
+        if (commandLine.hasOption(SCHEMA)) {
+            String optionValue = commandLine.getOptionValue(SCHEMA);
+            String[] schemaNames = optionValue.split(",");
+            schemaConfig.setSchemaNames(schemaNames);
+        }
+        return schemaConfig;
+    }
+
+    private static Pair<DbConfig, DbConfig> parseArgs(String customArgs) {
+        String[] split = customArgs.split("\\|");
+        if (split.length < 2) {
+            help("-c 参数不正确,请查看使用说明");
+        }
+        return Pair.of(convertToDbConfig(split[0]), convertToDbConfig(split[1]));
+    }
+
+    private static DbConfig convertToDbConfig(String arg) {
+        String[] split = arg.split(":");
+        String dialect = split[0];
+        String host = split[1];
+        String port = split[2];
+        String username = split[3];
+        String password = split[4];
+        String alias = split[5];
+        Optional<DialectEnum> instance = DialectEnum.getInstance(dialect);
+        if (!instance.isPresent()) {
+            help("数据库方言必填");
+            System.exit(1);
+        }
+        if (StringUtils.isEmpty(host)) {
+            help("数据库主机地址必填");
+            System.exit(1);
+        }
+        if (StringUtils.isEmpty(username)) {
+            help("数据库用户名必填");
+            System.exit(1);
+        }
+        if (StringUtils.isEmpty(password)) {
+            help("数据库密码必填");
+            System.exit(1);
+        }
+        if (StringUtils.isEmpty(alias)) {
+            alias = host;
+        }
+
+        return DbConfig.builder()
+                .dialect(instance.get())
+                .host(host)
+                .port(Integer.valueOf(port))
+                .userName(username)
+                .password(password)
+                .alias(alias)
+                .build();
+    }
+
+    private static void compareWithMode(CommandLine commandLine, String mode) {
         Optional<Mode> instance = Mode.getInstance(mode);
         if (!instance.isPresent()) {
             help();
             return;
         }
         Mode modeEnum = instance.get();
+        DbCompareConfig dbCompareConfig = null;
         switch (modeEnum) {
             case DEV_VS_TEST:
-                DbComparator.builder()
-                        .dbCompareConfig(DbCompareConfigUtils.devVsTest())
-                        .build().compare();
+                dbCompareConfig = DbCompareConfigUtils.devVsTest();
                 break;
             case TEST_VS_PRE:
-                DbComparator.builder()
-                        .dbCompareConfig(DbCompareConfigUtils.testVsPre())
-                        .build().compare();
+                dbCompareConfig = DbCompareConfigUtils.testVsPre();
                 break;
             case PRE_VS_PROD:
-                DbComparator.builder()
-                        .dbCompareConfig(DbCompareConfigUtils.preVsProd())
-                        .build().compare();
+                dbCompareConfig = DbCompareConfigUtils.preVsProd();
                 break;
             default:
                 help("不支持的比较模式[" + mode + "]");
+                System.exit(1);
                 break;
         }
+        dbCompareConfig.getComparisonHandlerConfig().setFullMode(commandLine.hasOption(FULL_MODE));
+        DbComparator.builder()
+                .dbCompareConfig(setSchemaOrTableFilter(commandLine, dbCompareConfig))
+                .build().compare();
 
     }
 
     @Getter
     @AllArgsConstructor
     static enum Mode {
+        /**
+         *
+         */
         DEV_VS_TEST("1"),
+
+        /**
+         *
+         */
         TEST_VS_PRE("2"),
+
+        /**
+         *
+         */
         PRE_VS_PROD("3");
         private String code;
 

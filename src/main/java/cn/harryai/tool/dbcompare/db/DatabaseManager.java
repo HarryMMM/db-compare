@@ -17,6 +17,7 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -60,11 +61,12 @@ public class DatabaseManager {
                 classMapLeft.entrySet()) {
             List<? extends Comparable> l = lEntity.getValue();
             Class<? extends Comparable> key = lEntity.getKey();
-            compMap.put(key, Pair.of(l, classMapRight.remove(key)));
+            List<? extends Comparable> remove = classMapRight.remove(key);
+            compMap.put(key, Pair.of(l, remove == null ? Collections.emptyList() : remove));
         }
         for (Map.Entry<Class<? extends Comparable>, List<? extends Comparable>> rEntity :
                 classMapRight.entrySet()) {
-            compMap.put(rEntity.getKey(), Pair.of(null, rEntity.getValue()));
+            compMap.put(rEntity.getKey(), Pair.of(Collections.emptyList(), rEntity.getValue()));
         }
         return compMap;
     }

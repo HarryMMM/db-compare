@@ -1,5 +1,7 @@
 package cn.harryai.tool.dbcompare;
 
+import cn.harryai.tool.dbcompare.util.CommandLineUtils;
+
 /**
  * <p>
  *
@@ -10,6 +12,6 @@ package cn.harryai.tool.dbcompare;
  **/
 public class DbComparatorMain {
     public static void main(String[] args) {
-
+        CommandLineUtils.exec(args);
     }
 }

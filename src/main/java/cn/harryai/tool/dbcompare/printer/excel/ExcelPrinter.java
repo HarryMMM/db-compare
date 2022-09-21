@@ -26,6 +26,7 @@ import com.alibaba.excel.write.metadata.holder.WriteTableHolder;
 import com.alibaba.excel.write.metadata.style.WriteCellStyle;
 import com.alibaba.excel.write.style.HorizontalCellStyleStrategy;
 import com.alibaba.excel.write.style.column.AbstractColumnWidthStyleStrategy;
+import org.apache.commons.lang3.ClassPathUtils;
 import org.apache.commons.lang3.SerializationUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -39,6 +40,7 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.streaming.SXSSFSheet;
 
+import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
@@ -65,13 +67,13 @@ public final class ExcelPrinter extends AbsPinter<PrinterConfig> {
 
     @Override
     protected String doPrint(DataWarp<?, ?> dataWarp) {
-        String templateFileName = getClass().getClassLoader().getResource("compResult.xlsx").getFile();
+        InputStream resourceAsStream = this.getClass().getResourceAsStream("/compResult.xlsx");
         String leftDbAlias = dataWarp.getLeftDbAlias();
         String rightDbAlias = dataWarp.getRightDbAlias();
         Path fileName = Paths.get(basePath,
                 "[" + leftDbAlias + "]VS[" + rightDbAlias + "]_" + DateTimeFormatter.ofPattern(
                         "yyyyMMddHHmmss").format(LocalDateTime.now()) + ".xlsx");
-        try (ExcelWriter excelWriter = EasyExcel.write(fileName.toString()).withTemplate(templateFileName)
+        try (ExcelWriter excelWriter = EasyExcel.write(fileName.toString()).withTemplate(resourceAsStream)
                 .registerWriteHandler(rowWriteHandler())
                 .registerWriteHandler(cellBorder())
                 .excelType(ExcelTypeEnum.XLSX)
