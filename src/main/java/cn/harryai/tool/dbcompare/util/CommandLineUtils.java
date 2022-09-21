@@ -65,7 +65,7 @@ public final class CommandLineUtils {
                 .longOpt("mode")
                 .hasArg()
                 .required(false)
-                .desc("指定要使用的模式，custom，优先使用此参数。内置以下几个:" + System.lineSeparator() + "1. dev vs test" + System.lineSeparator() +
+                .desc("指定要使用的模式，与-c互斥，同时使用优先使用此参数。内置以下几个:" + System.lineSeparator() + "1. dev vs test" + System.lineSeparator() +
                         "2. test vs pre" + System.lineSeparator() + "3. pre vs prod")
                 .build();
         CUSTOM = Option.builder()
