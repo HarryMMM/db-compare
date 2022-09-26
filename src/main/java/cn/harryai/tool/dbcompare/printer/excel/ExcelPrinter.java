@@ -14,20 +14,14 @@ import cn.harryai.tool.dbcompare.util.BeanUtils;
 import cn.harryai.tool.dbcompare.util.ExcelUtils;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.ExcelWriter;
-import com.alibaba.excel.metadata.Head;
-import com.alibaba.excel.metadata.data.WriteCellData;
 import com.alibaba.excel.support.ExcelTypeEnum;
 import com.alibaba.excel.util.MapUtils;
 import com.alibaba.excel.write.handler.RowWriteHandler;
-import com.alibaba.excel.write.handler.context.CellWriteHandlerContext;
 import com.alibaba.excel.write.metadata.WriteSheet;
 import com.alibaba.excel.write.metadata.holder.WriteSheetHolder;
 import com.alibaba.excel.write.metadata.holder.WriteTableHolder;
 import com.alibaba.excel.write.metadata.style.WriteCellStyle;
 import com.alibaba.excel.write.style.HorizontalCellStyleStrategy;
-import com.alibaba.excel.write.style.column.AbstractColumnWidthStyleStrategy;
-import org.apache.commons.lang3.ClassPathUtils;
-import org.apache.commons.lang3.SerializationUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.poi.ss.usermodel.BorderStyle;
@@ -38,7 +32,6 @@ import org.apache.poi.ss.usermodel.IndexedColors;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.xssf.streaming.SXSSFSheet;
 
 import java.io.InputStream;
 import java.nio.file.Path;
@@ -61,6 +54,7 @@ public final class ExcelPrinter extends AbsPinter<PrinterConfig> {
 
     private static final String TABLE = "table";
     private static final String COLUMN = "column";
+    private static final int CONTENT_START_ROW = 2;
 
     public ExcelPrinter() {
     }
@@ -75,7 +69,7 @@ public final class ExcelPrinter extends AbsPinter<PrinterConfig> {
                         "yyyyMMddHHmmss").format(LocalDateTime.now()) + ".xlsx");
         try (ExcelWriter excelWriter = EasyExcel.write(fileName.toString()).withTemplate(resourceAsStream)
                 .registerWriteHandler(rowWriteHandler())
-                .registerWriteHandler(cellBorder())
+//                .registerWriteHandler(cellBorder())
                 .excelType(ExcelTypeEnum.XLSX)
                 .build()) {
             WriteSheet tableSheet = EasyExcel.writerSheet(TABLE).build();
@@ -108,37 +102,57 @@ public final class ExcelPrinter extends AbsPinter<PrinterConfig> {
 
     private static RowWriteHandler rowWriteHandler() {
         return new RowWriteHandler() {
-            @Override
-            public void afterRowDispose(WriteSheetHolder writeSheetHolder, WriteTableHolder writeTableHolder, Row row
-                    , Integer relativeRowIndex, Boolean isHead) {
-                if (row.getRowNum() < 2) {
-                    CellStyle rowStyle = row.getRowStyle();
-                    return;
-                }
-                int startRowNun;
-                if (TABLE.equals(writeSheetHolder.getSheetName())) {
-                    startRowNun = 2;
-                } else if (COLUMN.equals(writeSheetHolder.getSheetName())) {
-                    startRowNun = 3;
-                } else {
-                    return;
-                }
-                for (int i = startRowNun; i < row.getLastCellNum(); i++) {
-                    Cell cell1 = row.getCell(i);
-                    Cell cell2 = row.getCell(++i);
-                    if (!ExcelUtils.cellValueEqual(cell1,cell2)) {
-                        Sheet sheet = writeSheetHolder.getSheet();
+            private void compareCell(int startColumn, int endColumn, Row row, Sheet sheet) {
+                int diff = (endColumn + 1 - startColumn) / CONTENT_START_ROW;
+                int count = diff;
+                for (int i = startColumn; i < endColumn && count > 0; i++, count--) {
+                    Cell cellL = row.getCell(i);
+                    Cell cellR = row.getCell(i +diff);
+                    if (!ExcelUtils.cellValueEqual(cellL, cellR)) {
                         Workbook workbook = sheet.getWorkbook();
                         Font font = workbook.createFont();
-                        font.setFontHeightInPoints((short) 12);
+                        font.setFontHeightInPoints((short) 11);
                         font.setColor(IndexedColors.RED.getIndex());
                         font.setBold(true);
                         CellStyle cellStyle = workbook.createCellStyle();
-                        cellStyle.cloneStyleFrom(cell1.getCellStyle());
+                        cellStyle.cloneStyleFrom(cellL.getCellStyle());
                         cellStyle.setFont(font);
-                        cell1.setCellStyle(cellStyle);
-                        cell2.setCellStyle(cellStyle);
+                        cellL.setCellStyle(cellStyle);
+                        cellR.setCellStyle(cellStyle);
                     }
+                }
+            }
+
+            @Override
+            public void afterRowDispose(WriteSheetHolder writeSheetHolder, WriteTableHolder writeTableHolder, Row row
+                    , Integer relativeRowIndex, Boolean isHead) {
+                if (row.getRowNum() < CONTENT_START_ROW) {
+                    return;
+                }
+
+                // 设置框线
+                setBorder(writeSheetHolder, row);
+
+                // 差异数据标红
+                if (TABLE.equals(writeSheetHolder.getSheetName())) {
+                    compareCell(3, 8, row, writeSheetHolder.getSheet());
+                } else if (COLUMN.equals(writeSheetHolder.getSheetName())) {
+                    compareCell(4, 11, row, writeSheetHolder.getSheet());
+                }
+            }
+
+            private void setBorder(WriteSheetHolder writeSheetHolder, Row row) {
+                // 设置框线
+                Workbook workbook = writeSheetHolder.getSheet().getWorkbook();
+                CellStyle cellStyle = workbook.createCellStyle();
+                cellStyle.cloneStyleFrom(row.getCell(row.getFirstCellNum()).getCellStyle());
+                cellStyle.setBorderRight(BorderStyle.THIN);
+                cellStyle.setBorderLeft(BorderStyle.THIN);
+                cellStyle.setBorderBottom(BorderStyle.THIN);
+                cellStyle.setBorderTop(BorderStyle.THIN);
+                for (int i = 1; i < row.getLastCellNum(); i++) {
+                    Cell cell = row.getCell(i);
+                    cell.setCellStyle(cellStyle);
                 }
             }
         };

@@ -29,7 +29,7 @@ class DbComparatorTest {
 
     @org.junit.jupiter.api.Test
     void argTest() {
-        String[] args = {"-m 1"};
+        String[] args = {"-m", "1"};
         CommandLineUtils.exec(args);
 //        String s = IPAddressUtil.checkHostString("11.2.2.2");
 //        System.out.println(s);
